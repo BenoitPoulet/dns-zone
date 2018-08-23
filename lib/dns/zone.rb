@@ -35,7 +35,7 @@ module DNS
     # @api public
     def soa
       # return the first SOA we find in the records array.
-      rr = @records.find { |rr| rr.type == "SOA" }
+      rr = @records.find { |record| record.type == "SOA" }
       return rr if rr
       # otherwise create a new SOA
       rr = DNS::Zone::RR::SOA.new
@@ -131,7 +131,6 @@ module DNS
       #     with a ";" (semicolon). 
 
       entries = []
-      mode = :line
       entry = ''
 
       parentheses_ref_count = 0
@@ -149,9 +148,6 @@ module DNS
 
         quotes = entry.count('"')
         has_quotes = quotes > 0
-
-        parentheses = entry.count('()')
-        has_parentheses = parentheses > 0
 
         if has_quotes
           character_strings = entry.scan(/("(?:[^"\\]+|\\.)*")/).join(' ')
