@@ -5,7 +5,7 @@ class RR_Record_Test < DNS::Zone::TestCase
   def test_rr_record_defaults
     rr = DNS::Zone::RR::Record.new
     assert_equal '@', rr.label, 'label is @, by default'
-    assert_equal nil, rr.ttl, 'ttl is nil, by default'
+    assert_nil rr.ttl, 'ttl is nil, by default'
   end
 
   def test_rr_record_with_label
