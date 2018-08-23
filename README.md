@@ -139,6 +139,7 @@ Special thanks to Peter J. Philipp [centroid.eu](http://centroid.eu) for sponsor
     [ ] Add support for RR Type: KEY
     [ ] Add support for RR Type: RP
     [ ] Add support for RR Type: RT
+    [ ] Add support for RR Type: CAA (RFC 6844)
 
 # Misc. Development Notes
 
