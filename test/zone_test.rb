@@ -51,6 +51,7 @@ EOL
 
   # basic zone file example
   ZONE_FILE_BASIC_EXAMPLE =<<-EOL
+$ORIGIN lividpenguin.com.
 @ IN SOA ns0.lividpenguin.com. luke.lividpenguin.com. ( 2013101406 12h 15m 3w 3h )
 @ IN NS ns0.lividpenguin.com.
 @ IN MX 10 mail

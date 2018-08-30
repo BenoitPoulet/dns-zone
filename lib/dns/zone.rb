@@ -59,7 +59,7 @@ module DNS
         content << rr.dump
       end
 
-      content.join("\n") << "\n"
+      dump_directives << content.join("\n") << "\n"
     end
 
     # Generates pretty output of the zone and its records.
@@ -75,7 +75,7 @@ module DNS
         last_type = rr.type
       end
 
-      content.join("\n") << "\n"
+      dump_directives << content.join("\n") << "\n"
     end
 
     # Load the provided zone file data into a new DNS::Zone object.
@@ -180,6 +180,16 @@ module DNS
     end
 
     private
+
+    # Dumps the $ORIGIN and $TTL directives of this zone (for use by #dump and #dump_pretty).
+    #
+    # @api private
+    def dump_directives
+      content = ""
+      content << "$ORIGIN #{origin}\n" unless origin.to_s.empty?
+      content << "$TTL #{ttl}\n" unless ttl.to_s.empty?
+      content
+    end
 
     # Records sorted with more important types being at the top.
     #
