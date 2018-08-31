@@ -327,6 +327,18 @@ EOL
       assert_equal expected, dump, 'expected zone file should match dumped zone file'
     end
 
+    def test_load_zone_with_include_in_quotes
+      string = zone_input("$INCLUDE \"#{INCLUDED_FILE}\"")
+      zone = DNS::Zone.load(string, ORIGIN, include_callback)
+
+      # dump zone file.
+      dump = zone.dump
+
+      # check output.
+      expected = zone_with_origin('@ IN A 78.47.253.85')
+      assert_equal expected, dump, 'expected zone file should match dumped zone file'
+    end
+
     private
 
     def zone_input(content)

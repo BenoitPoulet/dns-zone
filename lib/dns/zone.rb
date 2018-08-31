@@ -190,6 +190,7 @@ module DNS
             # * if no explicit origin is present, we pass the current "last_origin"
             # * the recursive call to load_entries() will not modify the current "options"
             included_file, included_origin = $2.split(' ')
+            included_file = included_file[1...-1] if included_file.start_with?('"') && included_file.end_with?('"')
             included_string = include_callback.call(included_file)
             included_entries = self.extract_entries(included_string)
             included_options = options.merge(last_origin: included_origin || options[:last_origin], is_included: true)
