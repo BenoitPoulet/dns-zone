@@ -79,9 +79,14 @@ module DNS
     end
 
     # Load the provided zone file data into a new DNS::Zone object.
+    # When $INCLUDE directives may be used in the given zone data, then it makes
+    # sense to specify the include_callback argument. It receives the file name
+    # to include and should return its content. By default, it resolves relative
+    # file names with respect to the current working directory - but this is
+    # probably not the location of the currently processed zone file.
     #
     # @api public
-    def self.load(string, default_origin = "")
+    def self.load(string, default_origin = "", include_callback = ->(filename) { File.read(filename) })
       # get entries
       entries = self.extract_entries(string)
 
