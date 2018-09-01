@@ -7,7 +7,7 @@ module DNS
 
       REGEX_TTL = /\d+[wdmhs]?/i
       REGEX_KLASS = /(?<klass>IN)?/i
-      REGEX_TYPE = /(?<type>A|AAAA|CDNSKEY|CDS|CNAME|DLV|DNSKEY|DS|HINFO|MX|NAPTR|NS|NSEC|NSEC3|NSEC3PARAM|RRSIG|SOA|SPF|SRV|SSHFP|TXT|PTR)\s{1}/i
+      REGEX_TYPE = /(?<type>A|AAAA|CAA|CDNSKEY|CDS|CNAME|DLV|DNSKEY|DS|HINFO|MX|NAPTR|NS|NSEC|NSEC3|NSEC3PARAM|RRSIG|SOA|SPF|SRV|SSHFP|TXT|PTR)\s{1}/i
       REGEX_RR = /^(?<label>\S+|\s{1})\s*(?<ttl>#{REGEX_TTL})?\s*#{REGEX_KLASS}\s*#{REGEX_TYPE}\s*(?<rdata>[\s\S]*)$/i
       REGEX_DOMAINNAME = /\S+\.?/i
       REGEX_STRING = /((?:[^"\\]+|\\.)*)/
@@ -32,6 +32,7 @@ module DNS
         case captures[:type]
         when 'A'           then A.new.load(string, options)
         when 'AAAA'        then AAAA.new.load(string, options)
+        when 'CAA'         then CAA.new.load(string, options)
         when 'CDNSKEY'     then CDNSKEY.new.load(string, options)
         when 'CDS'         then CDS.new.load(string, options)
         when 'CNAME'       then CNAME.new.load(string, options)
@@ -61,6 +62,7 @@ module DNS
 
       autoload :A,          'dns/zone/rr/a'
       autoload :AAAA,       'dns/zone/rr/aaaa'
+      autoload :CAA,        'dns/zone/rr/caa'
       autoload :CDNSKEY,    'dns/zone/rr/cdnskey'
       autoload :CDS,        'dns/zone/rr/cds'
       autoload :CNAME,      'dns/zone/rr/cname'
