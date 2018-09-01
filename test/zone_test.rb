@@ -270,4 +270,103 @@ EOL
     assert_equal 'maiow IN TXT "purr((maiow)"', entries[0], 'entry should match expected'
   end
 
+  class IncludeWithOriginTest < DNS::Zone::TestCase
+    
+    ORIGIN = 'lividpenguin.com.'
+    ORIGIN_LINE = "$ORIGIN #{ORIGIN}"
+    SOA_LINE = '@ IN SOA ns0.lividpenguin.com. luke.lividpenguin.com. ( 2013101406 12h 15m 3w 3h )'
+    INCLUDED_FILE = 'www.zone'
+    DEFAULT_INCLUDED_LINES = '@ IN A 78.47.253.85'
+
+    def test_load_zone_with_include
+      string = zone_input("$INCLUDE #{INCLUDED_FILE}")
+      zone = DNS::Zone.load(string, ORIGIN, include_callback)
+
+      # dump zone file.
+      dump = zone.dump
+
+      # check output.
+      expected = zone_with_origin('@ IN A 78.47.253.85')
+      assert_equal expected, dump, 'expected zone file should match dumped zone file'
+    end
+
+    def test_load_zone_with_include_and_origin
+      string = zone_input("$INCLUDE #{INCLUDED_FILE} www.#{ORIGIN}")
+      zone = DNS::Zone.load(string, ORIGIN, include_callback)
+
+      # dump zone file.
+      dump = zone.dump
+
+      # check output.
+      expected = zone_with_origin('www IN A 78.47.253.85')
+      assert_equal expected, dump, 'expected zone file should match dumped zone file'
+    end
+
+    def test_load_zone_with_origin_in_include
+      string = zone_input("$INCLUDE #{INCLUDED_FILE}\n@ IN A 1.2.3.4")
+      zone = DNS::Zone.load(string, ORIGIN, include_callback("$ORIGIN www.#{ORIGIN}\n#{DEFAULT_INCLUDED_LINES}"))
+
+      # dump zone file.
+      dump = zone.dump
+
+      # check output.
+      expected = zone_with_origin("www IN A 78.47.253.85\n@ IN A 1.2.3.4")
+      assert_equal expected, dump, 'expected zone file should match dumped zone file'
+    end
+
+    def test_load_zone_with_nested_include
+      string = zone_input('$INCLUDE content.zone')
+      filename_to_content = { 'content.zone' => "$INCLUDE #{INCLUDED_FILE}", INCLUDED_FILE => DEFAULT_INCLUDED_LINES }
+      zone = DNS::Zone.load(string, ORIGIN, mapped_include_callback(filename_to_content))
+
+      # dump zone file.
+      dump = zone.dump
+
+      # check output.
+      expected = zone_with_origin('@ IN A 78.47.253.85')
+      assert_equal expected, dump, 'expected zone file should match dumped zone file'
+    end
+
+    def test_load_zone_with_include_in_quotes
+      string = zone_input("$INCLUDE \"#{INCLUDED_FILE}\"")
+      zone = DNS::Zone.load(string, ORIGIN, include_callback)
+
+      # dump zone file.
+      dump = zone.dump
+
+      # check output.
+      expected = zone_with_origin('@ IN A 78.47.253.85')
+      assert_equal expected, dump, 'expected zone file should match dumped zone file'
+    end
+
+    private
+
+    def zone_input(content)
+      zone_with_origin(content)
+    end
+
+    def zone_with_origin(content)
+      "#{ORIGIN_LINE}\n#{SOA_LINE}\n#{content}\n"
+    end
+
+    def include_callback(content = DEFAULT_INCLUDED_LINES)
+      mapped_include_callback({ INCLUDED_FILE => content })
+    end
+
+    def mapped_include_callback(filename_to_content)
+      ->(filename) { filename_to_content[filename] || raise("Included unexpected file: #{filename}") }
+    end
+
+  end
+
+  class IncludeWithoutOriginTest < IncludeWithOriginTest
+    
+    private
+
+    def zone_input(content)
+      "#{SOA_LINE}\n#{content}\n"
+    end
+
+  end
+
 end

@@ -124,8 +124,7 @@ Special thanks to Peter J. Philipp [centroid.eu](http://centroid.eu) for sponsor
             [ ] names should end in a dot, otherwise they are invalid after expansion
             [ ] IPv4 and IPv6 cant be mixed
 
-    [ ] Ability to 'include' defaults/records into a zone.
-        This may or may not mean supporting the `$INCLUDE` directive.
+    [x] Ability to 'include' defaults/records into a zone (`$INCLUDE` directive).
 
 ## At some point; low priority
 

@@ -79,35 +79,20 @@ module DNS
     end
 
     # Load the provided zone file data into a new DNS::Zone object.
+    # When $INCLUDE directives may be used in the given zone data, then it makes
+    # sense to specify the include_callback argument. It receives the file name
+    # to include and should return its content. By default, it resolves relative
+    # file names with respect to the current working directory - but this is
+    # probably not the location of the currently processed zone file.
     #
     # @api public
-    def self.load(string, default_origin = "")
+    def self.load(string, default_origin = "", include_callback = ->(filename) { File.read(filename) })
       # get entries
       entries = self.extract_entries(string)
 
       instance = self.new
 
-      options = {}
-      entries.each do |entry|
-        # read in special statments like $TTL and $ORIGIN
-        if entry =~ /\$(ORIGIN|TTL)\s+(.+)/
-          instance.ttl    = $2 if $1 == 'TTL'
-          if $1 == 'ORIGIN'
-            instance.origin ||= $2
-            options[:origin] ||= $2
-            options[:last_origin] = $2
-          end
-          next
-        end
-
-        # parse each RR and create a Ruby object for it
-        if entry =~ DNS::Zone::RR::REGEX_RR
-          rec = DNS::Zone::RR.load(entry, options)
-          next unless rec
-          instance.records << rec
-          options[:last_label] = rec.label
-        end
-      end
+      load_entries(entries, instance, include_callback, default_origin: default_origin)
 
       # use default_origin if we didn't see a ORIGIN directive in the zone
       if instance.origin.to_s.empty? && !default_origin.empty?
@@ -177,6 +162,53 @@ module DNS
       end
 
       return entries
+    end
+
+    # Load the given extracted entries into an existing DNS::Zone object.
+    #
+    # @api private
+    def self.load_entries(entries, instance, include_callback, options = {})
+      options = { default_origin: '', last_origin: '', is_included: false }.merge(options)
+      entries.each do |entry|
+        # read in special statements like $TTL, $ORIGIN and $INCLUDE
+        if entry =~ /\$(ORIGIN|TTL|INCLUDE)\s+(.+)/
+          instance.ttl = $2 if $1 == 'TTL'
+          if $1 == 'ORIGIN'
+            unless options[:is_included]
+              # we take the first $ORIGIN as "origin" (thus overriding "default_origin"), but only
+              # if this $ORIGIN is directly in the zone file - i.e., not in an included file
+              instance.origin ||= $2
+              options[:origin] ||= $2
+            end
+            options[:last_origin] = $2
+          end
+          if $1 == 'INCLUDE'
+            # when another file is included, we use the include_callback to obtain its content,
+            # parse its entries, and work on it recursively
+            # notes:
+            # * the second argument to the $INCLUDE may specify an origin explicitly
+            # * if no explicit origin is present, we pass the current "last_origin"
+            # * the recursive call to load_entries() will not modify the current "options"
+            included_file, included_origin = $2.split(' ')
+            included_file = included_file[1...-1] if included_file.start_with?('"') && included_file.end_with?('"')
+            included_string = include_callback.call(included_file)
+            included_entries = self.extract_entries(included_string)
+            included_options = options.merge(last_origin: included_origin || options[:last_origin], is_included: true)
+            load_entries(included_entries, instance, include_callback, included_options)
+          end
+          next
+        end
+
+        # parse each RR and create a Ruby object for it
+        if entry =~ DNS::Zone::RR::REGEX_RR
+          rec = DNS::Zone::RR.load(entry, options)
+          next unless rec
+          instance.records << rec
+          options[:last_label] = rec.label
+        end
+      end
+
+      return instance
     end
 
     private
