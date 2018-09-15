@@ -18,6 +18,19 @@ class RR_TXT_Test < DNS::Zone::TestCase
     assert_equal 'labelname 2w IN TXT "test text"', rr.dump
   end
 
+  def test_build_multiple_quoted_strings
+    rr = DNS::Zone::RR::TXT.new
+
+    # set a long text with 300 characters
+    rr.text = '(10 chars)' * 30
+
+    # we expect chunks of at most 200 characters
+    # (but actually implementations leading to at most 255 chars would also be fine)
+    chunk1 = %Q{"#{'(10 chars)' * 20}"}
+    chunk2 = %Q{"#{'(10 chars)' * 10}"}
+    assert_equal "@ IN TXT #{chunk1} #{chunk2}", rr.dump
+  end
+
   def test_load_rr__txt
     rr = DNS::Zone::RR::TXT.new.load('txtrecord IN TXT "test text"')
     assert_equal 'txtrecord', rr.label
