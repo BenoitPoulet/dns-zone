@@ -1,7 +1,7 @@
 # Parent class of all RR types, common resource record code lives here.
 # Is responsible for building a Ruby object given a RR string.
 #
-# @abstract Each RR TYPE should subclass and override: {#load} and #{dump} 
+# @abstract Each RR TYPE should subclass and override: {#load} and #{dump}
 class DNS::Zone::RR::Record
 
   attr_accessor :label, :ttl
@@ -69,16 +69,22 @@ class DNS::Zone::RR::Record
     captures = string.match(DNS::Zone::RR::REGEX_RR)
     return nil unless captures
 
-    if [' ', nil].include?(captures[:label])
-      @label = options[:last_label]
-    else
-      @label = captures[:label]
-    end
+    unrolled_origin = options[:last_origin]
+                      .chomp('.') if options[:last_origin]
 
-    # unroll records nested under other origins
-    unrolled_origin = options[:last_origin].sub(options[:origin] || options[:default_origin], '').chomp('.') if options[:last_origin]
-    if unrolled_origin && !unrolled_origin.empty?
-      @label = @label == '@' ? unrolled_origin : "#{@label}.#{unrolled_origin}"
+    @label = captures[:label]
+
+    if [' ', nil].include?(@label) or @label =~ /^\t+/
+      # Empty labels indicate to use the previous value
+      @label = options[:last_label]
+
+    elsif @label == '@' && unrolled_origin && !unrolled_origin.empty?
+      # '@' and an unrolled origin set the current origin
+      @label = unrolled_origin
+
+    elsif unrolled_origin && !unrolled_origin.empty?
+      # Set the 'sub' $origin
+      @label = "#{@label}.#{unrolled_origin}"
     end
 
     @ttl = captures[:ttl]
